@@ -52,6 +52,7 @@ if 'chatbot' not in st.session_state:
     )
     
     st.session_state.chatbot = EnhancedRAGChatbot(config)
+    st.session_state.chatbot.llm_backend = os.getenv("LLM_BACKEND", "openai") # added for UI purposes
     st.session_state.messages = []
     
     # Check if collection has documents and build index if needed
@@ -114,7 +115,7 @@ else:
             for chunk in st.session_state.chatbot.query_stream(prompt):
                 full_response += chunk
                 response_placeholder.markdown(full_response + "▌")  # Add cursor
-            
+
             # Remove cursor when done
             response_placeholder.markdown(full_response)
         

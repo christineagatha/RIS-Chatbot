@@ -175,6 +175,20 @@ class EnhancedRAGChatbot:
     def __init__(self, config: Optional[RAGConfig] = None):
         """Initialize enhanced RAG chatbot with configuration"""
         self.config = config or RAGConfig()
+
+        # """
+        # Adding for UI purposes
+        # """
+        # self.llm_backend = os.getenv("LLM_BACKEND", "openai").lower()
+
+        # if self.llm_backend == "mock":
+        #     print("⚠️ Using mock LLM backend. No real API calls will be made.")
+        #     self.query_engine = self._mock_query_engine()
+        #     self.index = None  # Optional: disable index for mock mode
+        #     return
+        # """ 
+        # Up to here is for UI purposes
+        # """
         
         # Set up logging
         logging.basicConfig(level=getattr(logging, self.config.log_level))
@@ -588,60 +602,84 @@ Provide a clear and direct response to the user's query.
             self.query_cache.set(question, top_k, formatted_response)
         
         return formatted_response
+
+        """
+        Commenting out streaming for now and adding dummy function for UI purposes
+        """
     
+    # def query_stream(self, question: str, top_k: Optional[int] = None):
+    #     """Query the RAG system with streaming response"""
+    #     if not self.query_engine:
+    #         raise ValueError("Index not built. Call build_index() first.")
+        
+    #     top_k = top_k or self.config.similarity_top_k
+        
+    #     # Check cache first
+    #     if self.query_cache:
+    #         cached_result = self.query_cache.get(question, top_k)
+    #         if cached_result:
+    #             if self.monitor:
+    #                 self.monitor.log_cache_hit()
+    #             # Yield cached result as single chunk
+    #             yield cached_result
+    #             return
+    #         else:
+    #             if self.monitor:
+    #                 self.monitor.log_cache_miss()
+        
+    #     # Create streaming query engine
+    #     streaming_query_engine = self._create_query_engine(similarity_top_k=top_k, streaming=True)
+        
+    #     # Execute streaming query
+    #     start_time = time.time()
+    #     response = streaming_query_engine.query(question)
+        
+    #     # Accumulate the full response for caching and formatting
+    #     full_response = ""
+        
+    #     # Stream the response
+    #     for token in response.response_gen:
+    #         full_response += token
+    #         yield token
+        
+    #     # Log performance and cache result
+    #     duration = time.time() - start_time
+    #     if self.monitor:
+    #         self.monitor.log_query_time(duration)
+        
+    #     # Format and cache the complete response
+    #     if self.query_cache:
+    #         # Create a mock response object for formatting
+    #         class MockResponse:
+    #             def __init__(self, text, source_nodes):
+    #                 self.response = text
+    #                 self.source_nodes = source_nodes
+    #             def __str__(self):
+    #                 return self.response
+            
+    #         mock_response = MockResponse(full_response, response.source_nodes)
+    #         formatted_response = self._format_response_with_references(mock_response)
+    #         self.query_cache.set(question, top_k, formatted_response)
+  
     def query_stream(self, question: str, top_k: Optional[int] = None):
-        """Query the RAG system with streaming response"""
+        if getattr(self, "llm_backend", "openai") == "mock":
+            # Stream dummy response if mock backend is set
+            for token in ["This ", "is ", "a ", "mock ", "response."]:
+                yield token
+            return
         if not self.query_engine:
             raise ValueError("Index not built. Call build_index() first.")
         
-        top_k = top_k or self.config.similarity_top_k
-        
-        # Check cache first
-        if self.query_cache:
-            cached_result = self.query_cache.get(question, top_k)
-            if cached_result:
-                if self.monitor:
-                    self.monitor.log_cache_hit()
-                # Yield cached result as single chunk
-                yield cached_result
-                return
-            else:
-                if self.monitor:
-                    self.monitor.log_cache_miss()
-        
-        # Create streaming query engine
-        streaming_query_engine = self._create_query_engine(similarity_top_k=top_k, streaming=True)
-        
-        # Execute streaming query
-        start_time = time.time()
-        response = streaming_query_engine.query(question)
-        
-        # Accumulate the full response for caching and formatting
-        full_response = ""
-        
-        # Stream the response
-        for token in response.response_gen:
-            full_response += token
-            yield token
-        
-        # Log performance and cache result
-        duration = time.time() - start_time
-        if self.monitor:
-            self.monitor.log_query_time(duration)
-        
-        # Format and cache the complete response
-        if self.query_cache:
-            # Create a mock response object for formatting
-            class MockResponse:
-                def __init__(self, text, source_nodes):
-                    self.response = text
-                    self.source_nodes = source_nodes
-                def __str__(self):
-                    return self.response
-            
-            mock_response = MockResponse(full_response, response.source_nodes)
-            formatted_response = self._format_response_with_references(mock_response)
-            self.query_cache.set(question, top_k, formatted_response)
+        else:
+            # Default: stream real LLM response
+            response = self.query_engine.query(prompt)
+            for token in response.response_gen:
+                yield token
+
+        """
+        Up to here is for UI purposes
+        """
+
     
     def query_with_details(self, question: str, top_k: Optional[int] = None) -> Dict[str, Any]:
         """Query with detailed source information"""
