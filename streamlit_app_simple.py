@@ -33,10 +33,10 @@ st.markdown("""
 if 'chatbot' not in st.session_state:
     # Load configuration from environment or use defaults
     config = RAGConfig(
-        embed_base_url=os.getenv("EMBED_BASE_URL", "http://localhost:8001/v1"),
-        llm_base_url=os.getenv("LLM_BASE_URL", "http://localhost:8000/v1"),
-        embed_model=os.getenv("EMBED_MODEL", "all-minilm-l6-v2-embedding"),
-        llm_model=os.getenv("LLM_MODEL", "mistral-small-3.2-24b"),
+        embed_base_url=os.getenv("EMBED_BASE_URL", "https://api.openai.com/v1"),
+        llm_base_url=os.getenv("LLM_BASE_URL", "https://api.openai.com/v1"),
+        embed_model=os.getenv("EMBED_MODEL", "text-embedding-ada-002"),
+        llm_model=os.getenv("LLM_MODEL", "gpt-3.5-turbo"),
         system_prompt=os.getenv("SYSTEM_PROMPT", "You are a helpful AI assistant. Answer questions based on the provided context. Be concise and accurate."),
         openai_api_key=os.getenv("OPENAI_API_KEY"),
         anthropic_api_key=os.getenv("ANTHROPIC_API_KEY"),
@@ -110,14 +110,38 @@ else:
             # Create placeholder for streaming response
             response_placeholder = st.empty()
             full_response = ""
-            
-            # Stream the response
-            for chunk in st.session_state.chatbot.query_stream(prompt):
-                full_response += chunk
-                response_placeholder.markdown(full_response + "▌")  # Add cursor
 
-            # Remove cursor when done
+            # Create placeholder for source references
+            citations = []
+
+            for token, sources in st.session_state.chatbot.query_stream(prompt):
+                full_response += token
+                response_placeholder.markdown(full_response + "▌")  # show the user typed effect
+                citations = sources  # get the updated sources
+
             response_placeholder.markdown(full_response)
+
+            # Show clickable citations below
+            if citations:
+                with st.expander("📄 Sources"):
+                    for i, src in enumerate(citations, 1):
+                        title = src['title']
+                        snippet = src['snippet']
+                        
+                        # Check if title is a URL and make it clickable
+                        if title.startswith('http'):
+                            st.markdown(f"**{i}. [{title}]({title})**")
+                        else:
+                            st.markdown(f"**{i}. {title}**")
+                        st.caption(snippet)
+
+            # # Stream the response
+            # for chunk in st.session_state.chatbot.query_stream(prompt):
+            #     full_response += chunk
+            #     response_placeholder.markdown(full_response + "▌")  # Add cursor
+
+            # # Remove cursor when done
+            # response_placeholder.markdown(full_response)
         
         # Add assistant message
         st.session_state.messages.append({"role": "assistant", "content": full_response})

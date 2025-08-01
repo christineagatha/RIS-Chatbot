@@ -639,25 +639,43 @@ Provide a clear and direct response to the user's query.
         start_time = time.time()
         response = streaming_query_engine.query(question)
         
-        # Accumulate the full response for caching and formatting
-        full_response = ""
+        # # Accumulate the full response for caching and formatting
+        # full_response = ""
         
-        # Stream the response
-        for token in response.response_gen:
-            full_response += token
-            yield token
+        # # Stream the response
+        # for token in response.response_gen:
+        #     full_response += token
+        #     yield token, source_nodes
 
         # Append citations
-        source_nodes = response.source_nodes
-        if source_nodes:
-            full_response += "\n\n**Sources:**\n"
-            seen = set()
-            for i, node in enumerate(source_nodes, 1):
-                meta = node.metadata
-                title = meta.get("title") or meta.get("file_name") or meta.get("source") or "Unknown"
-                if title not in seen:
-                    full_response += f"{i}. {title}\n"
-                    seen.add(title)
+        # source_nodes = response.source_nodes
+        source_nodes = []
+        seen = set()
+        for node in response.source_nodes:
+            meta = node.metadata
+            # Prioritize source (which could be URL) over other fields
+            title = meta.get("source") or meta.get("title") or meta.get("file_name") or "Unknown"
+            if title not in seen:
+                seen.add(title)
+                source_nodes.append({
+                    "title": title,
+                    "doc_id": node.node_id,
+                    "metadata": node.metadata,
+                    "snippet": node.text[:300] + ("..." if len(node.text) > 300 else "")
+                })
+        # if source_nodes:
+        #     full_response += "\n\n**Sources:**\n"
+        #     seen = set()
+        #     for i, node in enumerate(source_nodes, 1):
+        #         meta = node.metadata
+        #         title = meta.get("title") or meta.get("file_name") or meta.get("source") or "Unknown"
+        #         if title not in seen:
+        #             full_response += f"{i}. {title}\n"
+        #             seen.add(title)
+
+        # Stream tokens with source metadata
+        for token in response.response_gen:
+            yield token, source_nodes
         
         # Log performance and cache result
         duration = time.time() - start_time
@@ -674,8 +692,8 @@ Provide a clear and direct response to the user's query.
                 def __str__(self):
                     return self.response
             
-            mock_response = MockResponse(full_response, response.source_nodes)
-            formatted_response = self._format_response_with_references(mock_response)
+            # mock_response = MockResponse(full_response, response.source_nodes)
+            # formatted_response = self._format_response_with_references(mock_response)
             self.query_cache.set(question, top_k, formatted_response)
     
     def query_with_details(self, question: str, top_k: Optional[int] = None) -> Dict[str, Any]:

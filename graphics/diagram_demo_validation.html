@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RAG Chatbot Validation Diagram</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #333;
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    #mermaid-diagram {
+      text-align: center;
+      margin: 20px 0;
+    }
+    .description {
+      margin-top: 20px;
+      padding: 15px;
+      background-color: #f8f9fa;
+      border-left: 4px solid #007bff;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .controls {
+      text-align: center;
+      margin: 20px 0;
+    }
+    button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin: 0 10px;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>RIS Chatbot and Validation Diagram</h1>
+
+    <div id="mermaid-diagram">
+      <p>Click "Render Diagram" to display the validation flow.</p>
+    </div>
+
+
+    <div class="controls">
+        <button onclick="renderDiagram()">Render Diagram</button>
+        <button onclick="clearDiagram()">Clear</button>
+    </div>
+
+    <div class="description">
+      <h3>Validation Flow:</h3>
+      <p>This diagram shows the validation component of the RAG chatbot system, including how the Reasoning Model and Validator assess the chatbot’s accuracy.</p>
+      <ul>
+        <li><strong>Reasoning Model:</strong> Generates test questions to probe the chatbot's knowledge</li>
+        <li><strong>Validator:</strong> Sends controlled queries and evaluates responses</li>
+        <li><strong>Web Server:</strong> Interfaces with the chatbot</li>
+        <li><strong>LLM:</strong> Receives feedback to improve output</li>
+      </ul>
+    </div>
+  </div>
+
+  <script src="graphic_validation.js"></script>
+  <script>
+    function clearDiagram() {
+      const container = document.getElementById('mermaid-diagram');
+      container.innerHTML = '<p>Diagram cleared. Click "Render Diagram" to display it again.</p>';
+    }
+  </script>
+</body>
+</html>
